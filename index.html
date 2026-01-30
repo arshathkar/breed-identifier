@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Cattle & Buffalo Breed Identifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --bg-secondary: #0f1419;
+      --card: rgba(30, 41, 59, 0.4);
+      --card-glass: rgba(30, 41, 59, 0.3);
+      --text: #e2e8f0;
+      --text-bright: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #00ff88;
+      --accent-glow: rgba(0, 255, 136, 0.4);
+      --accent-2: #00d4ff;
+      --accent-2-glow: rgba(0, 212, 255, 0.4);
+      --accent-3: #8b5cf6;
+      --border: rgba(148, 163, 184, 0.1);
+      --border-bright: rgba(148, 163, 184, 0.2);
+      --error: #ff4444;
+      --error-glow: rgba(255, 68, 68, 0.3);
+      --success: #00ff88;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 20px var(--accent-glow);
+    }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: 
+        radial-gradient(circle at 10% 20%, rgba(0, 255, 136, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
+        linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 10px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 136, 0.03) 2px, rgba(0, 255, 136, 0.03) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 212, 255, 0.03) 2px, rgba(0, 212, 255, 0.03) 4px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 20px);
+      justify-content: flex-start;
+    }
+    header {
+      text-align: center;
+      padding: 20px 20px 16px;
+      position: relative;
+    }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      margin-bottom: 8px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 50%, var(--accent-3) 100%);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 8s ease infinite;
+      text-shadow: 0 0 40px var(--accent-glow);
+      position: relative;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 8px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+    .pill {
+      display: inline-block;
+      background: rgba(0, 255, 136, 0.1);
+      backdrop-filter: blur(10px);
+      color: var(--accent);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+      transition: all 0.3s ease;
+    }
+    .pill:hover {
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.4);
+      transform: translateY(-2px);
+    }
+    .main-content {
+      display: flex;
+      justify-content: center;
+      margin-top: auto;
+      margin-bottom: auto;
+      padding-top: 60px;
+    }
+    .card {
+      background: var(--card-glass);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--border-bright);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 
+        var(--shadow-lg),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.5;
+    }
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: 
+        var(--shadow-lg),
+        0 0 30px rgba(0, 255, 136, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .upload-section h2 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-area::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 255, 136, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .upload-area:hover {
+      border-color: var(--accent);
+      background: rgba(0, 255, 136, 0.05);
+      box-shadow: 
+        0 0 30px rgba(0, 255, 136, 0.2),
+        inset 0 0 30px rgba(0, 255, 136, 0.05);
+      transform: translateY(-2px);
+    }
+    .upload-area:hover::before {
+      opacity: 1;
+    }
+    .upload-area.dragover {
+      border-color: var(--accent);
+      background: rgba(0, 255, 136, 0.1);
+      box-shadow: 
+        0 0 40px rgba(0, 255, 136, 0.3),
+        inset 0 0 40px rgba(0, 255, 136, 0.1);
+      transform: scale(1.02);
+    }
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 10px var(--accent-glow));
+      transition: transform 0.3s ease;
+    }
+    .upload-area:hover .upload-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+    .upload-text {
+      color: var(--text-bright);
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    .upload-hint {
+      font-size: 14px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+    }
+    #fileInput {
+      display: none;
+    }
+    .btn {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+      color: var(--bg);
+      border: none;
+      padding: 12px 28px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 12px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 
+        0 4px 15px rgba(0, 255, 136, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 
+        0 8px 25px rgba(0, 255, 136, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    .btn:hover:not(:disabled)::before {
+      left: 100%;
+    }
+    .btn:active:not(:disabled) {
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+    .preview-section {
+      display: none;
+    }
+    .preview-section.active {
+      display: block;
+    }
+    .image-preview {
+      width: 100%;
+      max-height: 250px;
+      object-fit: contain;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-bright);
+      box-shadow: var(--shadow-md);
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    .image-preview:hover {
+      box-shadow: 
+        var(--shadow-lg),
+        0 0 30px rgba(0, 255, 136, 0.2);
+      transform: scale(1.01);
+    }
+    .results-section {
+      display: none;
+    }
+    .results-section.active {
+      display: block;
+    }
+    .results-section h2 { margin-bottom: 16px; }
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+    }
+    .spinner {
+      border: 4px solid var(--border);
+      border-top: 4px solid var(--accent);
+      border-right: 4px solid var(--accent-2);
+      border-bottom: 4px solid var(--accent-3);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+      box-shadow: 
+        0 0 20px var(--accent-glow),
+        inset 0 0 20px var(--accent-2-glow);
+      position: relative;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading p {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .result-card {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-bright);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 
+        var(--shadow-md),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .result-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 
+        var(--shadow-lg),
+        0 0 30px rgba(0, 255, 136, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .breed-name {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 30px var(--accent-glow);
+    }
+    .confidence {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 212, 255, 0.2));
+      backdrop-filter: blur(10px);
+      color: var(--accent);
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .breed-info {
+      margin-top: 12px;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.2s ease;
+      gap: 16px;
+    }
+    .info-row:hover {
+      border-bottom-color: var(--accent);
+      padding-left: 8px;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .traits-row {
+      align-items: flex-start;
+      padding-bottom: 0;
+    }
+    .traits-value {
+      text-align: right;
+      max-width: 65%;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .info-label {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .info-value {
+      color: var(--text-bright);
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .explanation {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 3px solid var(--accent-2);
+      border-radius: 8px;
+    }
+    .explanation-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--accent-2);
+    }
+    .explanation-text {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .error-message {
+      background: rgba(255, 68, 68, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      color: var(--error);
+      padding: 16px;
+      border-radius: 16px;
+      margin-top: 16px;
+      box-shadow: 
+        0 0 30px rgba(255, 68, 68, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .error-message::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--error);
+      box-shadow: 0 0 10px var(--error-glow);
+    }
+    .top-predictions {
+      margin-top: 16px;
+    }
+    .top-predictions h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .prediction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(5px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+    .prediction-item:hover {
+      background: rgba(0, 255, 136, 0.05);
+      border-color: var(--accent);
+      transform: translateX(4px);
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+    }
+    .prediction-name {
+      font-weight: 600;
+      color: var(--text-bright);
+      min-width: 150px;
+    }
+    .prediction-bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      margin: 0 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .prediction-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px var(--accent-glow);
+      position: relative;
+    }
+    .prediction-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .reset-btn {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-bright);
+      color: var(--text-bright);
+      margin-top: 12px;
+    }
+    .reset-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+      padding: 0 20px;
+      position: relative;
+    }
+    .tabs::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.3;
+    }
+    .tab {
+      padding: 10px 28px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -3px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      border-radius: 12px 12px 0 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tab::before {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transform: scaleX(0);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+    .tab::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 255, 136, 0.05);
+      border-radius: 12px 12px 0 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .tab:hover {
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .tab:hover::after {
+      opacity: 1;
+    }
+    .tab:hover::before {
+      transform: scaleX(0.6);
+    }
+    .tab:active {
+      transform: translateY(0px) scale(0.98);
+    }
+    .center {
+      text-align: center;
+    }
+    .tab.active {
+      color: var(--accent);
+    }
+    .tab.active::after {
+      opacity: 1;
+      background: rgba(0, 255, 136, 0.1);
+    }
+    .tab.active::before {
+      transform: scaleX(1);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .error-message .reupload-btn {
+      margin-top: 16px;
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: var(--bg);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    }
+    .error-message .reupload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
+    }
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .history-item {
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .history-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 212, 255, 0.1));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .history-item:hover {
+      transform: translateY(-6px) scale(1.02);
+      border-color: var(--accent);
+      box-shadow: 
+        0 12px 40px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(0, 255, 136, 0.2);
+    }
+    .history-item:hover::before {
+      opacity: 1;
+    }
+    .history-image {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .history-item:hover .history-image {
+      transform: scale(1.1);
+    }
+    .history-info {
+      padding: 12px;
+    }
+    .history-breed {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .history-confidence {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .history-date {
+      font-size: 12px;
+      color: var(--muted);
+      opacity: 0.7;
+    }
+    .empty-history {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty-history-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    .clear-history-btn {
+      margin-top: 16px;
+      background: rgba(255, 68, 68, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      color: var(--error);
+    }
+    .clear-history-btn:hover {
+      background: rgba(255, 68, 68, 0.2);
+      border-color: var(--error);
+      box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+    }
+    /* Custom Confirmation Dialog */
+    .confirm-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      opacity: 0;
+      animation: fadeIn 0.2s ease forwards;
+    }
+    .confirm-dialog {
+      background: var(--card-glass);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--border-bright);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 
+        var(--shadow-lg),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transform: scale(0.9);
+      animation: scaleIn 0.2s ease forwards;
+    }
+    @keyframes scaleIn {
+      to {
+        transform: scale(1);
+      }
+    }
+    .confirm-dialog h3 {
+      color: var(--text-bright);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .confirm-dialog p {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .confirm-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    .confirm-btn {
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .confirm-btn-cancel {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-bright);
+      color: var(--text-bright);
+    }
+    .confirm-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--accent);
+    }
+    .confirm-btn-confirm {
+      background: linear-gradient(135deg, var(--error), #cc3333);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
+    }
+    .confirm-btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 68, 68, 0.5);
+    }
+    .tab-content {
+      animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+      }
+    }
+    .result-card, .prediction-item, .history-item {
+      animation: slideUp 0.5s ease;
+    }
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--accent), var(--accent-2));
+      border-radius: 5px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    }
+    /* Selection styling */
+    ::selection {
+      background: rgba(0, 255, 136, 0.3);
+      color: var(--text-bright);
+    }
+    /* Focus styles */
+    button:focus-visible, input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🐄 AI Breed Identifier</h1>
+      <p class="subtitle">Advanced Neural Network for Cattle & Buffalo Classification</p>
+      <div class="pill">Powered by Deep Learning</div>
+    </header>
+
+    <div class="main-content">
+      <div class="card">
+        <div class="tabs">
+          <button class="tab active" id="uploadTab" onclick="switchTab('upload')">Upload & Detect</button>
+          <button class="tab" id="historyTab" onclick="switchTab('history')">History</button>
+        </div>
+
+        <div class="tab-content active" id="uploadTabContent">
+          <h2 class="center" style="font-size: 22px; font-weight: 700; color: var(--text-bright); margin-bottom: 16px; letter-spacing: -0.01em;">Upload Image</h2>
+
+          <!-- This area is shown first -->
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">⚡</div>
+            <div class="upload-text">Drop Image Here or Click to Browse</div>
+            <div class="upload-hint">JPG • PNG • WEBP | MAX 10MB</div>
+            <input type="file" id="fileInput" accept="image/*" />
+          </div>
+
+          <!-- This area replaces the upload dialog once we have results/errors -->
+          <div class="preview-section" id="previewSection">
+            <img id="imagePreview" class="image-preview" alt="Preview" />
+          </div>
+
+          <div class="loading" id="loadingSection" style="display: none;">
+            <div class="spinner"></div>
+            <p style="margin-top: 8px;">Processing Neural Network Analysis...</p>
+          </div>
+
+          <div class="results-section" id="resultsSection" style="margin-top: 0;">
+            <h2 class="center" style="font-size: 22px; font-weight: 700; color: var(--text-bright); margin-bottom: 16px; letter-spacing: -0.01em;">Detection Results</h2>
+            <div id="resultsContent"></div>
+          </div>
+
+          <!-- Always at bottom -->
+          <button class="btn reset-btn" id="resetBtn" style="margin-top: 12px;">Upload Another Image</button>
+        </div>
+
+        <div class="tab-content" id="historyTabContent">
+          <h2 style="margin-bottom: 16px; font-size: 22px; font-weight: 700; color: var(--text-bright);">Detection History</h2>
+          <div id="historyContent"></div>
+          <button class="btn clear-history-btn" id="clearHistoryBtn" onclick="clearHistory()">Clear History</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewSection = document.getElementById('previewSection');
+    const imagePreview = document.getElementById('imagePreview');
+    const loadingSection = document.getElementById('loadingSection');
+    const resultsSection = document.getElementById('resultsSection');
+    const resultsContent = document.getElementById('resultsContent');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // Upload area click
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleFile(file);
+      }
+    });
+
+    function handleFile(file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreview.src = e.target.result;
+        previewSection.classList.add('active');
+        resultsSection.classList.remove('active');
+        // keep upload visible until we have result/error
+        uploadArea.style.display = '';
+        // Automatically start detection after preview is shown
+        startDetection(file);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function startDetection(file) {
+      if (!file) return;
+
+      // Show loading animation while the backend processes the image
+      previewSection.classList.remove('active');
+      resultsSection.classList.remove('active');
+      resultsContent.innerHTML = '';
+      // hide upload dialog while running detection
+      uploadArea.style.display = 'none';
+      // Show loading section
+      loadingSection.style.display = 'flex';
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      try {
+        const response = await fetch('/predict', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          loadingSection.style.display = 'none';
+          // Save image data for reupload button
+          const imageDataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.readAsDataURL(file);
+          });
+          showError(data.error || 'Prediction failed', data.error_type, imageDataUrl);
+          return;
+        }
+
+        // Save to history
+        const imageDataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(file);
+        });
+        await saveToHistory(data, imageDataUrl);
+        loadingSection.style.display = 'none';
+        displayResults(data, imageDataUrl);
+      } catch (error) {
+        loadingSection.style.display = 'none';
+        showError(error.message, 'network');
+      }
+    }
+
+    function displayResults(data, imageDataUrl) {
+      const { breed, confidence, top_predictions, breed_info } = data;
+
+      // results should replace upload dialog
+      uploadArea.style.display = 'none';
+      // Show image preview
+      if (imageDataUrl) {
+        imagePreview.src = imageDataUrl;
+        previewSection.classList.add('active');
+      }
+
+      let html = `
+        <div class="result-card">
+          <div class="result-header">
+            <div class="breed-name">${breed}</div>
+            <div class="confidence">${(confidence * 100).toFixed(1)}%</div>
+          </div>
+          ${breed_info && Object.keys(breed_info).length > 0 ? `
+            <div class="breed-info">
+              ${breed_info.category ? `
+                <div class="info-row">
+                  <span class="info-label">Category</span>
+                  <span class="info-value">${breed_info.category}</span>
+                </div>
+              ` : ''}
+              ${breed_info.region ? `
+                <div class="info-row">
+                  <span class="info-label">Native Region</span>
+                  <span class="info-value">${breed_info.region}</span>
+                </div>
+              ` : ''}
+              ${breed_info.milk_yield ? `
+                <div class="info-row">
+                  <span class="info-label">Milk Yield</span>
+                  <span class="info-value">${breed_info.milk_yield}</span>
+                </div>
+              ` : ''}
+              ${breed_info.traits ? `
+                <div class="info-row traits-row">
+                  <span class="info-label">Physical Traits</span>
+                  <span class="info-value traits-value">${breed_info.traits}</span>
+                </div>
+              ` : ''}
+            </div>
+          ` : `
+            <div class="breed-info">
+              <div class="info-row">
+                <span class="info-label">Information</span>
+                <span class="info-value" style="color: var(--muted); font-style: italic;">Breed information not available</span>
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+
+      if (top_predictions && top_predictions.length > 1) {
+        html += `
+          <div class="top-predictions">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--text-bright); margin-bottom: 12px; letter-spacing: -0.01em;">Alternative Predictions</h3>
+            ${top_predictions.slice(1).map(pred => `
+              <div class="prediction-item">
+                <span class="prediction-name">${pred.breed}</span>
+                <div class="prediction-bar">
+                  <div class="prediction-fill" style="width: ${pred.confidence * 100}%"></div>
+                </div>
+                <span class="confidence">${(pred.confidence * 100).toFixed(1)}%</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      resultsContent.innerHTML = html;
+      resultsSection.classList.add('active');
+    }
+
+    function showError(message, errorType, imageDataUrl = null) {
+      // errors should replace upload dialog too
+      uploadArea.style.display = 'none';
+      
+      // Show image preview if available
+      if (imageDataUrl) {
+        imagePreview.src = imageDataUrl;
+        previewSection.classList.add('active');
+        sessionStorage.setItem('lastFailedImage', imageDataUrl);
+      }
+
+      const reuploadBtn = errorType ? `
+        <button class="reupload-btn" onclick="reuploadImage()">📤 Reupload Image</button>
+      ` : '';
+      
+      resultsContent.innerHTML = `
+        <div class="error-message">
+          <strong>⚠️ ${errorType === 'quality' ? 'Image Quality Issue' : errorType === 'subject' ? 'Invalid Image' : 'Error'}:</strong><br>
+          ${message}
+          ${reuploadBtn}
+        </div>
+      `;
+      resultsSection.classList.add('active');
+    }
+
+    function reuploadImage() {
+      fileInput.value = '';
+      previewSection.classList.remove('active');
+      resultsSection.classList.remove('active');
+      const lastImage = sessionStorage.getItem('lastFailedImage');
+      if (lastImage) {
+        sessionStorage.removeItem('lastFailedImage');
+      }
+      fileInput.click();
+    }
+
+    resetBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      previewSection.classList.remove('active');
+      resultsSection.classList.remove('active');
+      uploadArea.classList.remove('dragover');
+      uploadArea.style.display = '';
+      resultsContent.innerHTML = '';
+    });
+
+    // Tab switching
+    function switchTab(tabName) {
+      const tabs = document.querySelectorAll('.tab');
+      const contents = document.querySelectorAll('.tab-content');
+      
+      tabs.forEach(tab => tab.classList.remove('active'));
+      contents.forEach(content => content.classList.remove('active'));
+      
+      if (tabName === 'upload') {
+        document.getElementById('uploadTab').classList.add('active');
+        document.getElementById('uploadTabContent').classList.add('active');
+      } else if (tabName === 'history') {
+        document.getElementById('historyTab').classList.add('active');
+        document.getElementById('historyTabContent').classList.add('active');
+        loadHistory();
+      }
+    }
+
+    // History management
+    async function saveToHistory(data, imageDataUrl) {
+      try {
+        let history = JSON.parse(localStorage.getItem('breedDetectionHistory') || '[]');
+        
+        // Compress image to thumbnail size to save storage space
+        const compressedImage = await compressImage(imageDataUrl, 200, 0.7);
+        
+        const historyItem = {
+          id: Date.now(),
+          breed: data.breed,
+          confidence: data.confidence,
+          image: compressedImage,
+          date: new Date().toISOString(),
+          breed_info: data.breed_info
+        };
+        history.unshift(historyItem); // Add to beginning
+        // Keep only last 20 items to prevent storage quota issues
+        if (history.length > 20) {
+          history = history.slice(0, 20);
+        }
+        localStorage.setItem('breedDetectionHistory', JSON.stringify(history));
+      } catch (error) {
+        // Handle storage quota exceeded error
+        if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+          console.warn('Storage quota exceeded, attempting to free space...');
+          try {
+            // Try to reduce history size and retry
+            let history = JSON.parse(localStorage.getItem('breedDetectionHistory') || '[]');
+            // Keep only last 10 items
+            history = history.slice(0, 10);
+            localStorage.setItem('breedDetectionHistory', JSON.stringify(history));
+            
+            // Retry saving with reduced history
+            const compressedImage = await compressImage(imageDataUrl, 150, 0.6);
+            const historyItem = {
+              id: Date.now(),
+              breed: data.breed,
+              confidence: data.confidence,
+              image: compressedImage,
+              date: new Date().toISOString(),
+              breed_info: data.breed_info
+            };
+            history.unshift(historyItem);
+            history = history.slice(0, 10);
+            localStorage.setItem('breedDetectionHistory', JSON.stringify(history));
+          } catch (retryError) {
+            console.error('Failed to save to history after cleanup:', retryError);
+            // Show user-friendly message
+            showStorageError();
+          }
+        } else {
+          console.error('Error saving to history:', error);
+        }
+      }
+    }
+
+    // Compress image to reduce storage size
+    function compressImage(dataUrl, maxWidth, quality) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to compressed data URL
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => {
+          // If compression fails, return original (but this shouldn't happen)
+          resolve(dataUrl);
+        };
+        img.src = dataUrl;
+      });
+    }
+
+    function showStorageError() {
+      // Show a non-intrusive notification about storage issue
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--error);
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-size: 14px;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      `;
+      notification.innerHTML = `
+        <strong>⚠️ Storage Full</strong><br>
+        <span style="font-size: 12px;">History couldn't be saved. Consider clearing old entries.</span>
+      `;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 5000);
+    }
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('breedDetectionHistory') || '[]');
+      const historyContent = document.getElementById('historyContent');
+      
+      if (history.length === 0) {
+        historyContent.innerHTML = `
+          <div class="empty-history">
+            <div class="empty-history-icon" style="font-size: 60px; opacity: 0.3;">⚡</div>
+            <p style="font-size: 16px; font-weight: 600; color: var(--text-bright);">No Detection History</p>
+            <p style="margin-top: 8px; font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace;">Upload images to build your history</p>
+          </div>
+        `;
+        return;
+      }
+
+      const historyHtml = `<div class="history-grid">
+        ${history.map(item => `
+          <div class="history-item">
+            <img src="${item.image}" alt="${item.breed}" class="history-image" />
+            <div class="history-info">
+              <div class="history-breed">${item.breed}</div>
+              <div class="history-confidence">Confidence: ${(item.confidence * 100).toFixed(1)}%</div>
+              ${item.breed_info && item.breed_info.category ? `
+                <div style="font-size: 12px; color: var(--muted); margin-top: 4px;">
+                  ${item.breed_info.category} • ${item.breed_info.region || ''}
+                </div>
+              ` : ''}
+              <div class="history-date">${new Date(item.date).toLocaleString()}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+      
+      historyContent.innerHTML = historyHtml;
+    }
+
+    function clearHistory() {
+      showConfirmDialog(
+        'Clear History',
+        'Are you sure you want to clear all detection history? This action cannot be undone.',
+        () => {
+          localStorage.removeItem('breedDetectionHistory');
+          loadHistory();
+        }
+      );
+    }
+
+    function showConfirmDialog(title, message, onConfirm) {
+      // Remove existing dialog if any
+      const existing = document.getElementById('confirmDialog');
+      if (existing) {
+        existing.remove();
+      }
+
+      const overlay = document.createElement('div');
+      overlay.id = 'confirmDialog';
+      overlay.className = 'confirm-overlay';
+      
+      overlay.innerHTML = `
+        <div class="confirm-dialog">
+          <h3>⚠️ ${title}</h3>
+          <p>${message}</p>
+          <div class="confirm-buttons">
+            <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirmDialog()">Cancel</button>
+            <button class="confirm-btn confirm-btn-confirm" onclick="executeConfirm()">Confirm</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      // Store confirm callback
+      overlay._confirmCallback = onConfirm;
+      
+      // Close on overlay click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          closeConfirmDialog();
+        }
+      });
+    }
+
+    function closeConfirmDialog() {
+      const dialog = document.getElementById('confirmDialog');
+      if (dialog) {
+        dialog.style.animation = 'fadeOut 0.2s ease forwards';
+        setTimeout(() => dialog.remove(), 200);
+      }
+    }
+
+    function executeConfirm() {
+      const dialog = document.getElementById('confirmDialog');
+      if (dialog && dialog._confirmCallback) {
+        dialog._confirmCallback();
+        closeConfirmDialog();
+      }
+    }
+
+
+    // Load history on page load if on history tab
+    if (document.getElementById('historyTab').classList.contains('active')) {
+      loadHistory();
+    }
+  </script>
+</body>
+</html>
