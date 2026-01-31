@@ -7,6 +7,7 @@ import re
 import numpy as np
 from PIL import Image
 from werkzeug.utils import secure_filename
+from tensorflow import keras
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -922,13 +923,10 @@ def predict():
 def health():
     return jsonify({"status": "healthy", "message": "Breed identification API is running"})
 
-
+init_model()
 if __name__ == "__main__":
-    # Try to load a trained model if present
-    init_model()
-
     print("Starting Cattle & Buffalo Breed Identification API...")
-    print("Visit http://localhost:5000 to use the application")
-    if __name__ == "__main__":
-            app.run()
+    app.run()
+
+
 
