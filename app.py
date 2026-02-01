@@ -9,7 +9,8 @@ from PIL import Image
 from werkzeug.utils import secure_filename
 from tensorflow import keras
 
-app = Flask(__name__, static_folder='.')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app = Flask(__name__)
 CORS(app)
 
 # Configuration
@@ -788,7 +789,8 @@ def predict_breed(image):
 
 @app.route("/")
 def index():
-    return send_from_directory(".", "index.html")
+    return send_from_directory(BASE_DIR, "index.html")
+
 
 @app.route("/predict", methods=["POST"])
 def predict():
