@@ -763,15 +763,17 @@ def init_model():
 
 
 def predict_breed(image):
-    """
-    If a real model is loaded, use it for prediction.
-    Otherwise fall back to the demo predictor.
-    """
     if MODEL is None or INV_CLASS_INDICES is None:
+        print("⚠️ USING DEMO MODEL")
         return predict_breed_demo(image)
+
+    print("✅ USING REAL TRAINED MODEL")
 
     preprocessed = preprocess_image(image)
     probs = MODEL.predict(preprocessed)[0]
+
+    print("Raw probs:", probs)
+    print("Max prob:", float(np.max(probs)))
 
     breeds = [INV_CLASS_INDICES[i] for i in range(len(probs))]
     probs = probs / probs.sum()
@@ -786,6 +788,7 @@ def predict_breed(image):
             }
         )
     return predictions
+
 
 @app.route("/")
 def index():
