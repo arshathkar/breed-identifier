@@ -1,3 +1,4 @@
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
@@ -525,16 +526,14 @@ def validate_cattle_buffalo(image):
     return True, None
 
 def preprocess_image(image):
-    """Preprocess image for model input"""
-    # Resize to model input size (adjust based on your model)
     image = image.resize((224, 224))
-    # Convert to RGB if needed
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
-    # Convert to numpy array and normalize
-    img_array = np.array(image) / 255.0
-    # Add batch dimension
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    img_array = np.array(image, dtype=np.float32)
     img_array = np.expand_dims(img_array, axis=0)
+    img_array = preprocess_input(img_array)  # 🔥 CRITICAL LINE
+
     return img_array
 
 
@@ -838,12 +837,12 @@ def predict():
 
         # Stronger subject gate: reject obvious humans/unrelated subjects before breed prediction
         # This MUST run before breed prediction to catch dogs and other animals
-        ok, gate_error = gate_reject_non_bovine(image)
+        """ ok, gate_error = gate_reject_non_bovine(image)
         if not ok:
             return jsonify({
                 "error": gate_error,
                 "error_type": "subject"
-            }), 400
+            }), 400 """
 
         # Preprocess image
         # Get predictions (real model if available, otherwise demo)
@@ -881,7 +880,7 @@ def predict():
         
         # Reject if confidence is too low (often means wrong subject or unclear image)
         # Lower threshold to allow more valid images through
-        if confidence < 0.15:
+        if confidence < 0.05:
             return jsonify({
                 "error": "Unable to identify breed with sufficient confidence. Please upload a clearer, closer cattle/buffalo image (preferably side/face view).",
                 "error_type": "subject"
